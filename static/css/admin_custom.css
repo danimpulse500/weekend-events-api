@@ -1,0 +1,163 @@
+/* Refined purple-and-white Django admin theme */
+
+/* Main page background */
+body {
+  background-color: #f8f7ff !important;
+  color: #1f2937 !important;
+}
+
+/* Navbar and header */
+.main-header, .navbar, .jazzmin-navbar, .navbar-expand, .navbar-dark, .navbar-light {
+  background-color: #6d28d9 !important;
+  border-color: #ede9fe !important;
+}
+
+/* Brand and navbar links */
+.brand-link, .main-header .navbar-nav .nav-link, .jazzmin-button, .topbar .nav-link {
+  color: #ffffff !important;
+}
+
+.main-header .navbar-nav .nav-link:hover,
+.navbar .nav-link:hover,
+.topbar .nav-link:hover {
+  color: #d8b4fe !important;
+}
+
+/* Sidebar */
+.main-sidebar, .sidebar, .jazzmin-sidebar {
+  background-color: #5b21b6 !important;
+  color: #f8f7ff !important;
+}
+
+.sidebar a, .nav-sidebar .nav-link {
+  color: #e9d5ff !important;
+}
+
+.sidebar .nav-sidebar .nav-link.active, .sidebar .nav-sidebar .nav-link:hover {
+  background-color: rgba(255,255,255,0.16) !important;
+  color: #ffffff !important;
+}
+
+/* Cards and content blocks */
+.content-wrapper, .content, .card, .card-body, .box, .jazzmin-card {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  border: 1px solid #e9d5ff !important;
+}
+
+.card-header, .card-footer, .box-header {
+  background-color: #7c3aed !important;
+  color: #ffffff !important;
+}
+
+.card-header h3, .card-header h1, .box-header h3 {
+  color: #ffffff !important;
+}
+
+/* Buttons */
+.btn-primary, .btn-primary:hover, .btn-primary:focus,
+.btn-info, .btn-info:hover, .btn-info:focus {
+  background-color: #8b5cf6 !important;
+  border-color: #7c3aed !important;
+  color: #ffffff !important;
+}
+
+.btn-secondary {
+  background-color: #ede9fe !important;
+  border-color: #d8b4fe !important;
+  color: #4c1d95 !important;
+}
+
+/* Tables */
+.table thead th {
+  background-color: #7c3aed !important;
+  color: #ffffff !important;
+}
+
+.table tbody tr:nth-child(odd) {
+  background-color: #fbf7ff !important;
+}
+
+.table tbody tr:hover {
+  background-color: #f3e8ff !important;
+}
+
+/* Forms */
+.form-control, .custom-select, .input-group-text {
+  background-color: #ffffff !important;
+  border: 1px solid #d8b4fe !important;
+}
+
+.form-control:focus, .custom-select:focus {
+  border-color: #7c3aed !important;
+  box-shadow: 0 0 0 0.2rem rgba(124, 58, 237, 0.18) !important;
+}
+
+/* Alerts */
+.alert-info {
+  background-color: #eef2ff !important;
+  border-color: #e0d7ff !important;
+  color: #4338ca !important;
+}
+
+/* Dashboard cards */
+.dashboard-overview {
+  margin-bottom: 2rem;
+}
+.dashboard-intro {
+  margin-bottom: 1rem;
+}
+.dashboard-intro h1 {
+  font-size: 1.9rem;
+  margin-bottom: 0.25rem;
+}
+.dashboard-intro p {
+  color: #6b7280 !important;
+  margin-bottom: 1.5rem;
+}
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.dashboard-card {
+  padding: 1.2rem;
+  border-radius: 1rem;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(109, 40, 217, 0.08);
+  border: 1px solid rgba(124, 58, 237, 0.12);
+}
+.dashboard-card__title {
+  font-size: 0.95rem;
+  color: #6d28d9;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.dashboard-card__value {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #111827;
+}
+.dashboard-card--secondary {
+  background: #f7f3ff;
+}
+.dashboard-card--accent {
+  background: #eef2ff;
+}
+.dashboard-section h2 {
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+  color: #111827 !important;
+}
+.dashboard-section p {
+  color: #4b5563 !important;
+}
+
+/* Footer */
+.main-footer, .footer {
+  background-color: #5b21b6 !important;
+  color: #ffffff !important;
+  border-top: 1px solid rgba(255,255,255,0.12) !important;
+}

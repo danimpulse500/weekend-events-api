@@ -1,0 +1,1813 @@
+<!doctype html>
+<html lang="en">
+{% load static %}
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekend Events Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0E0E14;
+      --surface: #161625;
+      --surface-raised: #1F1F33;
+      --border: #2E2E4B;
+      --text-primary: #F5F5FF;
+      --text-secondary: #A8A8C2;
+      --muted: #7C7CA3;
+      --primary: #8B72E8;
+      --primary-light: #C5B5FF;
+      --primary-dark: #5C4BCF;
+      --accent: #D8CAFF;
+      --success: #22C55E;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --info: #38BDF8;
+      --shadow: 0 0 0 1px rgba(255,255,255,0.06);
+      --focus-glow: 0 0 0 3px rgba(124, 58, 237, 0.25);
+      --radius-card: 6px;
+      --radius-panel: 8px;
+      --radius-input: 4px;
+      --radius-pill: 999px;
+      --space: 16px;
+      --transition: 180ms ease;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 24px;
+      padding: 24px;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      width: 220px;
+      min-height: calc(100vh - 48px);
+      padding: 24px 20px;
+      border-radius: 16px;
+      background: rgba(19, 19, 26, 0.98);
+      border: 1px solid rgba(255,255,255,0.04);
+      position: sticky;
+      top: 24px;
+      backdrop-filter: blur(18px);
+    }
+
+    .sidebar-top {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-primary);
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      font-size: 18px;
+    }
+
+    .brand span {
+      color: var(--primary);
+    }
+
+    .nav-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      flex: 1;
+    }
+
+    .nav-link {
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid transparent;
+      padding: 12px 14px;
+      color: var(--text-secondary);
+      background: transparent;
+      transition: background var(--transition), color var(--transition), border-color var(--transition);
+      text-align: left;
+    }
+
+    .nav-link.active {
+      color: var(--text-primary);
+      background: rgba(124, 58, 237, 0.12);
+      border-left: 3px solid var(--primary);
+      padding-left: 11px;
+    }
+
+    .nav-link:hover {
+      color: var(--text-primary);
+      background: #1C1C27;
+    }
+
+    .nav-link svg {
+      min-width: 20px;
+      color: inherit;
+    }
+
+    .sidebar-footer {
+      display: grid;
+      gap: 12px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .profile-chip {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      background: #0f0f16;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(124,58,237,0.6), rgba(160,92,255,0.6));
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 700;
+    }
+
+    .profile-meta {
+      display: grid;
+      gap: 4px;
+    }
+
+    .profile-meta strong {
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    .profile-meta a {
+      color: var(--primary-light);
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    .page-shell {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+    }
+
+    .dashboard-summary {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .dashboard-summary .section-header {
+      align-items: center;
+    }
+
+    .dashboard-summary .dashboard-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .dashboard-summary .hero-list {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .search-label {
+      display: grid;
+      gap: 8px;
+      width: 100%;
+      color: var(--text-secondary);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .search-field {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      color: var(--text-primary);
+    }
+
+    .search-field input {
+      border: none;
+      background: transparent;
+      color: var(--text-primary);
+      outline: none;
+      width: 100%;
+    }
+
+    i.fas, i.far, i.fab {
+      min-width: 20px;
+      width: 20px;
+      text-align: center;
+    }
+
+    .page-title {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .page-title h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .page-title p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .button,
+    .button-ghost,
+    .button-danger {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 6px;
+      min-height: 36px;
+      padding: 0 16px;
+      border: 1px solid transparent;
+      transition: transform var(--transition), background var(--transition), border-color var(--transition);
+      font-weight: 500;
+    }
+
+    .button {
+      background: var(--primary);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .button:hover {
+      background: var(--primary-dark);
+      transform: scale(0.99);
+    }
+
+    .button-ghost {
+      background: transparent;
+      color: var(--text-primary);
+      border-color: #2A2A3A;
+    }
+
+    .button-ghost:hover {
+      background: #1C1C27;
+    }
+
+    .button-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .page-content {
+      display: grid;
+      gap: 24px;
+    }
+
+    .grid-4 {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .grid-2 {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: 1.6fr 1fr;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .card-title {
+      margin: 0 0 10px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .stat-value {
+      margin: 0;
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      color: var(--text-primary);
+    }
+
+    .stat-label {
+      margin: 12px 0 0;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .stat-icon {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      opacity: 0.15;
+      width: 42px;
+      height: 42px;
+    }
+
+    .stat-card {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .secondary-card {
+      display: grid;
+      gap: 16px;
+    }
+
+    .table-card {
+      overflow: hidden;
+    }
+
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 12px 16px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+      background: #1C1C27;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background var(--transition);
+    }
+
+    tbody tr:nth-child(odd) {
+      background: #0A0A0F;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #0D0D14;
+    }
+
+    tbody tr:hover {
+      background: #13131A;
+    }
+
+    td {
+      padding: 14px 16px;
+      color: var(--text-primary);
+      vertical-align: middle;
+      font-size: 13px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5px 10px;
+      border-radius: var(--radius-pill);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+    }
+
+    .badge[data-variant='draft'] { background: rgba(156,163,175,0.16); color: #d1d5db; }
+    .badge[data-variant='published'] { background: rgba(34,197,94,0.12); color: var(--success); }
+    .badge[data-variant='sold_out'] { background: rgba(239,68,68,0.14); color: var(--danger); }
+    .badge[data-variant='completed'] { background: rgba(56,189,248,0.14); color: var(--info); }
+    .badge[data-variant='pending'] { background: rgba(245,158,11,0.14); color: var(--warning); }
+    .badge[data-variant='confirmed'] { background: rgba(34,197,94,0.14); color: var(--success); }
+    .badge[data-variant='scanned'] { background: rgba(56,189,248,0.14); color: var(--info); }
+    .badge[data-variant='cancelled'] { background: rgba(239,68,68,0.14); color: var(--danger); }
+
+    .pill {
+      padding: 7px 12px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      background: rgba(124, 58, 237, 0.12);
+      color: var(--primary);
+    }
+
+    .status-pill {
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-pill.published { background: rgba(34,197,94,0.14); color: var(--success); }
+    .status-pill.draft { background: rgba(156,163,175,0.16); color: #d1d5db; }
+    .status-pill.sold_out { background: rgba(239,68,68,0.14); color: var(--danger); }
+    .status-pill.completed { background: rgba(56,189,248,0.14); color: var(--info); }
+
+    .event-thumb {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      object-fit: cover;
+      background: #1C1C27;
+      flex-shrink: 0;
+    }
+
+    .event-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mini-bar {
+      height: 8px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .mini-bar-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 999px;
+    }
+
+    .table-action {
+      display: inline-flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .link-button {
+      background: transparent;
+      border: none;
+      padding: 8px 10px;
+      color: var(--text-secondary);
+      transition: color var(--transition);
+      cursor: pointer;
+    }
+
+    .link-button:hover { color: var(--text-primary); }
+
+    .form-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .form-row {
+      display: grid;
+      gap: 10px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      border-radius: var(--radius-input);
+      outline: none;
+      padding: 10px 12px;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: var(--focus-glow);
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .input-prefix {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-input);
+      padding: 10px 12px;
+      color: var(--text-primary);
+    }
+
+    .input-prefix input {
+      border: none;
+      outline: none;
+      background: transparent;
+      flex: 1;
+      padding: 0;
+    }
+
+    .tab-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .tab {
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      background: #0f0f16;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background var(--transition), border-color var(--transition), color var(--transition);
+    }
+
+    .tab.active {
+      background: rgba(124, 58, 237, 0.14);
+      color: var(--text-primary);
+      border-color: rgba(124, 58, 237, 0.24);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .section-header h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .section-subtitle {
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .full-width {
+      width: 100%;
+    }
+
+    .drawer, .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 15, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 24px;
+    }
+
+    .drawer.open, .modal.open {
+      display: flex;
+    }
+
+    .drawer-panel {
+      width: min(720px, 100%);
+      max-height: calc(100vh - 64px);
+      overflow-y: auto;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 28px 80px rgba(0,0,0,0.35);
+    }
+
+    .drawer-panel.small {
+      width: min(520px, 100%);
+    }
+
+    .drawer-close {
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-left: auto;
+    }
+
+    .field-hint {
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .file-drop {
+      border: 1px dashed rgba(124, 58, 237, 0.45);
+      border-radius: 12px;
+      padding: 20px;
+      color: var(--text-secondary);
+      text-align: center;
+      transition: background var(--transition), border-color var(--transition);
+      background: #0e0e15;
+    }
+
+    .file-drop.active {
+      background: rgba(124, 58, 237, 0.1);
+      border-color: var(--primary);
+      color: var(--text-primary);
+    }
+
+    .file-drop input {
+      display: none;
+    }
+
+    .table-stack {
+      display: none;
+    }
+
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: grid;
+      gap: 12px;
+      z-index: 1100;
+      width: min(360px, calc(100vw - 40px));
+    }
+
+    .toast {
+      padding: 16px 18px;
+      border-radius: 12px;
+      background: var(--surface-raised);
+      border-left: 4px solid var(--primary);
+      color: var(--text-primary);
+      box-shadow: 0 24px 50px rgba(0,0,0,0.25);
+      animation: toast-slide 220ms ease;
+      position: relative;
+    }
+
+    .toast[data-type='success'] { border-left-color: var(--success); }
+    .toast[data-type='error'] { border-left-color: var(--danger); }
+    .toast[data-type='warning'] { border-left-color: var(--warning); }
+    .toast[data-type='info'] { border-left-color: var(--info); }
+
+    .toast .toast-progress {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 3px;
+      background: rgba(255,255,255,0.1);
+      overflow: hidden;
+      border-bottom-left-radius: 12px;
+      border-bottom-right-radius: 12px;
+    }
+
+    .toast .toast-progress span {
+      display: block;
+      height: 100%;
+      width: 100%;
+      background: rgba(255,255,255,0.35);
+      animation: progress-bar 4s linear forwards;
+    }
+
+    @keyframes progress-bar {
+      from { transform: translateX(0); }
+      to { transform: translateX(-100%); }
+    }
+
+    @keyframes toast-slide {
+      from { transform: translateX(16px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .hidden { display: none !important; }
+
+    .hero-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .hero-item {
+      padding: 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      display: grid;
+      gap: 10px;
+    }
+
+    .hero-item strong {
+      display: block;
+      color: var(--text-primary);
+      font-size: 15px;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-item span {
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .scan-panel {
+      display: grid;
+      gap: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+    }
+
+    .scan-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      border-radius: 12px;
+      padding: 18px 20px;
+      font-size: 18px;
+    }
+
+    .scan-button {
+      width: 100%;
+      min-height: 52px;
+      border-radius: 10px;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .scan-result {
+      border-radius: 16px;
+      padding: 24px;
+      min-height: 260px;
+      display: grid;
+      gap: 18px;
+      justify-content: center;
+      align-content: center;
+      text-align: center;
+      border: 1px solid var(--border);
+      background: #0f0f16;
+    }
+
+    .scan-result.success { border-color: rgba(34,197,94,0.24); background: rgba(34,197,94,0.08); }
+    .scan-result.warning { border-color: rgba(245,158,11,0.24); background: rgba(245,158,11,0.08); }
+    .scan-result.error { border-color: rgba(239,68,68,0.24); background: rgba(239,68,68,0.08); }
+
+    .scan-result h3 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+
+    .scan-result p {
+      margin: 0;
+      color: var(--text-secondary);
+    }
+
+    .scan-footer {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 1060px) {
+      .app-shell { grid-template-columns: 1fr; padding: 18px; }
+      .sidebar { position: relative; top: 0; width: 100%; min-height: auto; }
+      .page-shell { gap: 18px; }
+      .grid-4, .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      body { padding-bottom: 80px; }
+      .sidebar { display: none; }
+      .topbar { flex-direction: column; align-items: stretch; }
+      .page-title h1 { font-size: 22px; }
+      .table-wrapper { overflow: hidden; }
+      .table-stack { display: grid; gap: 16px; }
+      table { display: none; }
+      .stack-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px;
+        display: grid;
+        gap: 12px;
+      }
+      .stack-row {
+        display: grid;
+        gap: 8px;
+      }
+      .mobile-nav {
+        display: grid;
+        position: fixed;
+        inset: auto 0 0 0;
+        z-index: 1000;
+        grid-template-columns: repeat(5, 1fr);
+        background: rgba(10,10,15,0.98);
+        border-top: 1px solid rgba(255,255,255,0.06);
+        padding: 10px 12px;
+      }
+      .mobile-nav button {
+        border: none;
+        background: transparent;
+        color: var(--text-secondary);
+        display: grid;
+        place-items: center;
+        gap: 6px;
+        font-size: 11px;
+        padding: 8px 6px;
+      }
+      .mobile-nav button.active { color: var(--text-primary); }
+      .mobile-nav button svg { width: 20px; height: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <div class="brand"><span>Weekend</span> Events</div>
+        <p class="section-subtitle">Organizer dashboard for event management, ticket sales, and check-in.</p>
+      </div>
+      <nav class="nav-list" role="navigation" aria-label="Dashboard navigation">
+        <button class="nav-link active" data-view="dashboard"><i class="fa-solid fa-house"></i> Dashboard</button>
+        <button class="nav-link" data-view="events"><i class="fa-solid fa-calendar-days"></i> Events</button>
+        <button class="nav-link" data-view="tickets"><i class="fa-solid fa-ticket-simple"></i> Tickets</button>
+        <button class="nav-link" data-view="scan"><i class="fa-solid fa-qrcode"></i> Scan QR</button>
+        <button class="nav-link" data-view="settings"><i class="fa-solid fa-gear"></i> Settings</button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="profile-chip">
+          <div class="avatar">A</div>
+          <div class="profile-meta">
+            <strong>Admin Organizer</strong>
+            <a href="#" id="logout-link">Logout</a>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="page-title">
+          <h1 id="page-heading">Dashboard</h1>
+          <p id="page-subtitle">Live view of events, tickets, and door check-ins.</p>
+        </div>
+        <div class="top-actions" id="top-actions"></div>
+      </header>
+
+      <main class="page-content">
+        <section id="dashboard-view" class="page-view">
+          <div class="dashboard-summary card">
+            <div class="section-header">
+              <div>
+                <h2>Platform health</h2>
+                <p class="section-subtitle">High-value metrics, quick actions, and the next steps for your event flow.</p>
+              </div>
+              <div class="dashboard-actions">
+                <button class="button" type="button" onclick="openEventModal()">Create event</button>
+                <button class="button-ghost" type="button" onclick="setActiveView('scan')">Scan ticket</button>
+                <button class="button-ghost" type="button" onclick="setActiveView('tickets')">Search tickets</button>
+              </div>
+            </div>
+            <div class="hero-list" id="dashboard-highlights"></div>
+          </div>
+          <div class="grid-4" id="dashboard-stats"></div>
+          <div class="grid-2">
+            <div class="card table-card">
+              <div class="section-header">
+                <div>
+                  <h2>Recent ticket activity</h2>
+                  <p class="section-subtitle">Most recent ticket purchases and scans.</p>
+                </div>
+              </div>
+              <div class="table-wrapper" id="recent-tickets-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Ref</th>
+                      <th>Buyer</th>
+                      <th>Event</th>
+                      <th>Amount</th>
+                      <th>Status</th>
+                      <th>Time</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recent-tickets-body"></tbody>
+                </table>
+                <div class="table-stack" id="recent-tickets-stack"></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="section-header">
+                <div>
+                  <h2>Upcoming events</h2>
+                  <p class="section-subtitle">Events that are next on the calendar.</p>
+                </div>
+              </div>
+              <div class="hero-list" id="upcoming-events-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="events-view" class="page-view hidden">
+          <div class="section-header">
+            <div>
+              <h2>Events</h2>
+              <p class="section-subtitle">Manage every event, create new shows, and update status.</p>
+            </div>
+            <button class="button" id="open-event-modal">+ New Event</button>
+          </div>
+          <div class="tab-list" id="event-filter-tabs"></div>
+          <div class="card table-card">
+            <div class="table-wrapper" id="events-table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Event</th>
+                    <th>Date</th>
+                    <th>Venue</th>
+                    <th>Fee</th>
+                    <th>Sold / Cap</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="events-table-body"></tbody>
+              </table>
+              <div class="table-stack" id="events-stack"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="tickets-view" class="page-view hidden">
+          <div class="section-header">
+            <div>
+              <h2>Tickets</h2>
+              <p class="section-subtitle">Search tickets, filter by status, and inspect QR details.</p>
+            </div>
+          </div>
+          <div class="card">
+            <div class="form-grid">
+              <label class="full-width">
+                Search tickets by reference, buyer name, or email
+                <input type="search" id="ticket-search" placeholder="Search tickets...">
+              </label>
+              <div class="tab-list" id="ticket-status-tabs"></div>
+              <label>
+                Filter by event
+                <select id="ticket-event-filter"></select>
+              </label>
+            </div>
+          </div>
+          <div class="card table-card">
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ref</th>
+                    <th>Buyer</th>
+                    <th>Event</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="tickets-table-body"></tbody>
+              </table>
+              <div class="table-stack" id="tickets-stack"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="scan-view" class="page-view hidden">
+          <div class="section-header">
+            <div>
+              <h2>Scan QR</h2>
+              <p class="section-subtitle">Quick verification at the door — paste a ticket reference and confirm in seconds.</p>
+            </div>
+          </div>
+          <div class="scan-panel">
+            <label>
+              Ticket reference
+              <input id="scan-input" class="scan-input" type="text" placeholder="Paste or type ticket reference" autocomplete="off">
+            </label>
+            <button class="scan-button" id="scan-button">Verify</button>
+            <div class="scan-result" id="scan-result">
+              <h3>Ready for the next guest</h3>
+              <p>Scan a ticket reference to verify entry status instantly.</p>
+            </div>
+            <div class="scan-footer">
+              <button class="button-ghost" id="scan-reset">Reset</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="settings-view" class="page-view hidden">
+          <div class="section-header">
+            <div>
+              <h2>Settings</h2>
+              <p class="section-subtitle">Dashboard configuration and platform information.</p>
+            </div>
+          </div>
+          <div class="card">
+            <div class="field-hint">This admin view is a minimal control panel designed for one organizer, with event and ticket management in a single place.</div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="drawer" id="event-modal">
+    <div class="drawer-panel small" role="dialog" aria-modal="true" aria-labelledby="event-modal-heading">
+      <div class="section-header">
+        <div>
+          <h2 id="event-modal-heading">Add new event</h2>
+          <p class="section-subtitle">Create or update an event for Weekend Events.</p>
+        </div>
+        <button class="drawer-close" id="close-event-modal">Close</button>
+      </div>
+      <form id="event-form" class="form-grid">
+        <label>
+          Title
+          <input name="title" type="text" placeholder="Event title" required>
+        </label>
+        <label>
+          Description
+          <textarea name="description" placeholder="Describe the event"></textarea>
+        </label>
+        <label>
+          Venue
+          <input name="venue" type="text" placeholder="Venue name or address" required>
+        </label>
+        <div class="form-grid" style="grid-template-columns:1fr 1fr; gap:16px;">
+          <label>
+            Date & time
+            <input name="date" type="datetime-local" required>
+          </label>
+          <label>
+            Capacity
+            <input name="capacity" type="number" min="1" placeholder="500" required>
+          </label>
+        </div>
+        <label>
+          Entry fee
+          <div class="input-prefix">
+            <span>₦</span>
+            <input name="entry_fee" type="number" min="0" step="0.01" placeholder="0.00" required>
+          </div>
+        </label>
+        <label>
+          Status
+          <select name="status" required>
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+            <option value="sold_out">Sold Out</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </label>
+        <label class="file-drop" id="flyer-drop">
+          <span>Drag or click to upload flyer</span>
+          <input name="flyer" type="file" accept="image/*">
+        </label>
+        <div class="section-header" style="padding:0; gap:12px;">
+          <button type="submit" class="button" id="save-event-button">Save event</button>
+          <button type="button" class="button-ghost" id="cancel-event-button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="drawer" id="ticket-detail-drawer">
+    <div class="drawer-panel small" role="dialog" aria-modal="true" aria-labelledby="ticket-detail-heading">
+      <div class="section-header">
+        <div>
+          <h2 id="ticket-detail-heading">Ticket details</h2>
+        </div>
+        <button class="drawer-close" id="close-ticket-drawer">Close</button>
+      </div>
+      <div class="hero-list" id="ticket-detail-content"></div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <div class="mobile-nav hidden" id="mobile-nav">
+    <button data-view="dashboard"><i class="fa-solid fa-house"></i><span>Dash</span></button>
+    <button data-view="events"><i class="fa-solid fa-calendar-days"></i><span>Events</span></button>
+    <button data-view="tickets"><i class="fa-solid fa-ticket-simple"></i><span>Tickets</span></button>
+    <button data-view="scan"><i class="fa-solid fa-qrcode"></i><span>Scan</span></button>
+    <button data-view="settings"><i class="fa-solid fa-gear"></i><span>Settings</span></button>
+  </div>
+
+  <script>
+    const API_BASE = '/api';
+    const state = {
+      activeView: localStorage.getItem('weekend-events-view') || 'dashboard',
+      events: [],
+      tickets: [],
+      eventFilter: 'all',
+      ticketStatus: 'all',
+      ticketSearch: '',
+      ticketEvent: 'all',
+      activeEventId: null,
+      isEditing: false,
+      scanResult: null,
+    };
+
+    const statusLabels = {
+      draft: 'Draft',
+      published: 'Published',
+      sold_out: 'Sold out',
+      completed: 'Completed',
+      cancelled: 'Cancelled',
+      pending: 'Pending',
+      confirmed: 'Confirmed',
+      scanned: 'Scanned',
+    };
+
+    const views = ['dashboard', 'events', 'tickets', 'scan', 'settings'];
+    const eventStatuses = ['all', 'published', 'draft', 'sold_out', 'completed', 'cancelled'];
+    const ticketStatuses = ['all', 'pending', 'confirmed', 'scanned', 'cancelled'];
+
+    const pageHeading = document.getElementById('page-heading');
+    const pageSubtitle = document.getElementById('page-subtitle');
+    const topActions = document.getElementById('top-actions');
+    const userNavLinks = document.querySelectorAll('[data-view]');
+    const mobileNav = document.getElementById('mobile-nav');
+
+    const dashboardStats = document.getElementById('dashboard-stats');
+    const dashboardHighlights = document.getElementById('dashboard-highlights');
+    const recentTicketsBody = document.getElementById('recent-tickets-body');
+    const recentTicketsStack = document.getElementById('recent-tickets-stack');
+    const upcomingEventsList = document.getElementById('upcoming-events-list');
+
+    const eventFilterTabs = document.getElementById('event-filter-tabs');
+    const eventsTableBody = document.getElementById('events-table-body');
+    const eventsStack = document.getElementById('events-stack');
+    const eventModal = document.getElementById('event-modal');
+    const eventForm = document.getElementById('event-form');
+    const eventModalHeading = document.getElementById('event-modal-heading');
+    const openEventModalButton = document.getElementById('open-event-modal');
+    const closeEventModalButton = document.getElementById('close-event-modal');
+    const cancelEventButton = document.getElementById('cancel-event-button');
+    const flyerDrop = document.getElementById('flyer-drop');
+    const saveEventButton = document.getElementById('save-event-button');
+
+    const ticketSearchInput = document.getElementById('ticket-search');
+    const ticketStatusTabs = document.getElementById('ticket-status-tabs');
+    const ticketEventFilter = document.getElementById('ticket-event-filter');
+    const ticketsTableBody = document.getElementById('tickets-table-body');
+    const ticketsStack = document.getElementById('tickets-stack');
+    const ticketDetailDrawer = document.getElementById('ticket-detail-drawer');
+    const ticketDetailContent = document.getElementById('ticket-detail-content');
+    const closeTicketDrawer = document.getElementById('close-ticket-drawer');
+
+    const scanInput = document.getElementById('scan-input');
+    const scanButton = document.getElementById('scan-button');
+    const scanReset = document.getElementById('scan-reset');
+    const scanResult = document.getElementById('scan-result');
+
+    document.addEventListener('DOMContentLoaded', () => {
+      bindNavigation();
+      bindFormEvents();
+      bindMobileNav();
+      setActiveView(state.activeView);
+      loadPageData();
+    });
+
+    function bindNavigation() {
+      document.querySelectorAll('.nav-link').forEach(button => {
+        button.addEventListener('click', () => setActiveView(button.dataset.view));
+      });
+      document.querySelectorAll('.mobile-nav button').forEach(button => {
+        button.addEventListener('click', () => setActiveView(button.dataset.view));
+      });
+    }
+
+    function bindMobileNav() {
+      if (window.innerWidth <= 768) {
+        mobileNav.classList.remove('hidden');
+      }
+      window.addEventListener('resize', () => {
+        if (window.innerWidth <= 768) {
+          mobileNav.classList.remove('hidden');
+        } else {
+          mobileNav.classList.add('hidden');
+        }
+      });
+    }
+
+    function bindFormEvents() {
+      openEventModalButton.addEventListener('click', () => openEventModal());
+      closeEventModalButton.addEventListener('click', closeEventModal);
+      cancelEventButton.addEventListener('click', closeEventModal);
+      eventModal.addEventListener('click', e => { if (e.target === eventModal) closeEventModal(); });
+      eventForm.addEventListener('submit', onSaveEvent);
+
+      flyerDrop.addEventListener('click', () => flyerDrop.querySelector('input').click());
+      flyerDrop.addEventListener('dragenter', activateDrop);
+      flyerDrop.addEventListener('dragover', e => { e.preventDefault(); activateDrop(); });
+      flyerDrop.addEventListener('dragleave', deactivateDrop);
+      flyerDrop.addEventListener('drop', handleFileDrop);
+
+      ticketSearchInput.addEventListener('input', () => {
+        state.ticketSearch = ticketSearchInput.value.trim();
+        renderTicketsPage();
+      });
+      ticketEventFilter.addEventListener('change', () => {
+        state.ticketEvent = ticketEventFilter.value;
+        renderTicketsPage();
+      });
+      ticketStatusTabs.addEventListener('click', e => {
+        const tab = e.target.closest('[data-status]');
+        if (!tab) return;
+        state.ticketStatus = tab.dataset.status;
+        renderTicketStatusTabs();
+        renderTicketsPage();
+      });
+
+      scanButton.addEventListener('click', verifyScan);
+      scanReset.addEventListener('click', resetScan);
+      scanInput.addEventListener('keyup', e => { if (e.key === 'Enter') verifyScan(); });
+      closeTicketDrawer.addEventListener('click', () => ticketDetailDrawer.classList.remove('open'));
+      ticketDetailDrawer.addEventListener('click', e => { if (e.target === ticketDetailDrawer) ticketDetailDrawer.classList.remove('open'); });
+    }
+
+    function setActiveView(view) {
+      if (!views.includes(view)) view = 'dashboard';
+      state.activeView = view;
+      localStorage.setItem('weekend-events-view', view);
+      document.querySelectorAll('.page-view').forEach(section => {
+        section.classList.toggle('hidden', section.id !== `${view}-view`);
+      });
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.toggle('active', link.dataset.view === view);
+      });
+      document.querySelectorAll('.mobile-nav button').forEach(button => {
+        button.classList.toggle('active', button.dataset.view === view);
+      });
+      renderHeader(view);
+      renderActiveView(view);
+    }
+
+    function renderHeader(view) {
+      const config = {
+        dashboard: ['Dashboard', 'Live platform metrics and recent activity.'],
+        events: ['Events', 'Create, publish, and manage events.'],
+        tickets: ['Tickets', 'Search and inspect ticket activity.'],
+        scan: ['Scan QR', 'Verify entry with the fastest door flow.'],
+        settings: ['Settings', 'Dashboard configuration and information.'],
+      };
+      pageHeading.textContent = config[view][0];
+      pageSubtitle.textContent = config[view][1];
+      topActions.innerHTML = view === 'dashboard' ? `
+        <button class="button" type="button" onclick="openEventModal()">Create event</button>
+        <button class="button-ghost" type="button" onclick="setActiveView('scan')">Scan ticket</button>
+        <button class="button-ghost" type="button" onclick="setActiveView('tickets')">Search tickets</button>
+      ` : '';
+    }
+
+    function renderActiveView(view) {
+      if (view === 'dashboard') return renderDashboard();
+      if (view === 'events') return renderEventsPage();
+      if (view === 'tickets') return renderTicketsPage();
+      if (view === 'scan') return focusScanInput();
+      return null;
+    }
+
+    async function loadPageData() {
+      await Promise.all([fetchEvents(), fetchTickets()]);
+      renderActiveView(state.activeView);
+    }
+
+    async function fetchEvents() {
+      try {
+        const response = await request(`${API_BASE}/events/admin/?search=`);
+        state.events = Array.isArray(response) ? response : [];
+      } catch (error) {
+        showToast('Unable to load events.');
+        state.events = [];
+      }
+    }
+
+    async function fetchTickets() {
+      try {
+        const response = await request(`${API_BASE}/tickets/?search=`);
+        state.tickets = Array.isArray(response) ? response : [];
+      } catch (error) {
+        showToast('Unable to load tickets.');
+        state.tickets = [];
+      }
+    }
+
+    async function renderDashboard() {
+      const events = state.events.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+      const tickets = state.tickets.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      const totalEvents = events.length;
+      const publishedEvents = events.filter(e => e.status === 'published').length;
+      const draftEvents = events.filter(e => e.status === 'draft').length;
+      const ticketsSold = tickets.filter(t => ['confirmed', 'scanned'].includes(t.status)).length;
+      const ticketsPending = tickets.filter(t => t.status === 'pending').length;
+      const revenue = tickets.reduce((sum, ticket) => sum + Number(ticket.amount_paid || 0), 0);
+      const today = new Date().toISOString().slice(0, 10);
+      const checkInsToday = tickets.filter(ticket => ticket.scanned_at?.slice(0, 10) === today).length;
+      const nextEvent = events.find(event => new Date(event.date) >= new Date());
+
+      dashboardHighlights.innerHTML = `
+        ${renderHeroItem('Published events', publishedEvents, 'fa-solid fa-check-circle')}
+        ${renderHeroItem('Drafts waiting', draftEvents, 'fa-solid fa-pencil')}
+        ${renderHeroItem('Pending tickets', ticketsPending, 'fa-solid fa-hourglass-half')}
+        ${renderHeroItem('Next event', nextEvent ? formatDate(nextEvent.date) : 'None', 'fa-solid fa-star')}
+      `;
+
+      dashboardStats.innerHTML = `
+        ${renderStatCard('Total events', totalEvents, 'fa-solid fa-calendar-days', '--primary')}
+        ${renderStatCard('Tickets sold', ticketsSold, 'fa-solid fa-ticket-simple', '--success')}
+        ${renderStatCard('Revenue', formatCurrency(revenue), 'fa-solid fa-dollar-sign', '--info')}
+        ${renderStatCard('Check-ins today', checkInsToday, 'fa-solid fa-circle-check', '--warning')}
+      `;
+
+      renderRecentTickets(tickets.slice(0, 8));
+      renderUpcomingEvents(events.filter(event => new Date(event.date) >= new Date()).slice(0, 5));
+    }
+
+    function renderStatCard(label, value, iconClass, colorVar) {
+      return `
+        <article class="card stat-card">
+          <span class="card-title">${label}</span>
+          <p class="stat-value">${value}</p>
+          <p class="stat-label">${label}</p>
+          <i class="${iconClass} stat-icon" style="color: var(${colorVar});"></i>
+        </article>
+      `;
+    }
+
+    function renderHeroItem(label, value, iconClass) {
+      return `
+        <article class="hero-item">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+            <strong>${value}</strong>
+            <i class="${iconClass}" style="color: var(--primary);"></i>
+          </div>
+          <span>${label}</span>
+        </article>
+      `;
+    }
+
+    function renderRecentTickets(tickets) {
+      recentTicketsBody.innerHTML = tickets.map(ticket => `
+        <tr>
+          <td><span style="color: var(--primary); font-family: 'JetBrains Mono', monospace;">${ticket.reference}</span></td>
+          <td>${ticket.buyer_name}</td>
+          <td>${ticket.event_title}</td>
+          <td>${formatCurrency(ticket.amount_paid || 0)}</td>
+          <td><span class="badge" data-variant="${ticket.status}">${statusLabels[ticket.status] || ticket.status}</span></td>
+          <td>${formatDate(ticket.created_at)}</td>
+        </tr>
+      `).join('');
+
+      recentTicketsStack.innerHTML = tickets.map(ticket => `
+        <article class="stack-card">
+          <div class="stack-row"><strong>${ticket.reference}</strong><span>${statusLabels[ticket.status] || ticket.status}</span></div>
+          <div class="stack-row"><span>${ticket.buyer_name}</span><span>${formatCurrency(ticket.amount_paid || 0)}</span></div>
+          <div class="stack-row"><span>${ticket.event_title}</span><span>${formatDate(ticket.created_at)}</span></div>
+        </article>
+      `).join('');
+    }
+
+    function renderUpcomingEvents(events) {
+      if (events.length === 0) {
+        upcomingEventsList.innerHTML = '<div class="hero-item"><strong>No upcoming events.</strong><span>Create an event to get started.</span></div>';
+        return;
+      }
+      upcomingEventsList.innerHTML = events.map(event => `
+        <article class="hero-item">
+          <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+            <div>
+              <strong>${event.title}</strong>
+              <p class="section-subtitle">${formatDate(event.date)} • ${event.venue}</p>
+            </div>
+            <span class="status-pill ${event.status}">${statusLabels[event.status] || event.status}</span>
+          </div>
+          <div>
+            <div class="mini-bar"><span class="mini-bar-fill" style="width:${Math.min(100, Math.round(((event.capacity - event.tickets_remaining) / event.capacity) * 100))}%"></span></div>
+            <p class="section-subtitle" style="margin-top: 8px;">${event.capacity - event.tickets_remaining} of ${event.capacity} reserved</p>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    async function renderEventsPage() {
+      pageHeading.textContent = 'Events';
+      pageSubtitle.textContent = 'Create, publish, and manage events.';
+      renderEventFilterTabs();
+      if (!state.events.length) await fetchEvents();
+      const filtered = state.eventFilter === 'all' ? state.events : state.events.filter(event => event.status === state.eventFilter);
+      eventsTableBody.innerHTML = filtered.map(event => `
+        <tr>
+          <td class="event-cell"><div class="event-thumb">${event.flyer ? `<img src="${event.flyer}" alt="${event.title}">` : `<div style="width:40px;height:40px;border-radius:12px;background:rgba(124,58,237,0.18);"></div>`}</div><div><strong>${event.title}</strong><div class="section-subtitle">${statusLabels[event.status] || event.status}</div></div></td>
+          <td>${formatDate(event.date)}</td>
+          <td>${event.venue}</td>
+          <td>${formatCurrency(event.entry_fee)}</td>
+          <td>
+            <div>${event.capacity - event.tickets_remaining} / ${event.capacity}</div>
+            <div class="mini-bar"><span class="mini-bar-fill" style="width:${Math.min(100, Math.round(((event.capacity - event.tickets_remaining) / event.capacity) * 100))}%"></span></div>
+          </td>
+          <td><span class="status-pill ${event.status}">${statusLabels[event.status] || event.status}</span></td>
+          <td class="table-action">
+            <button class="link-button" onclick="editEvent('${event.id}')">Edit</button>
+            <button class="link-button" onclick="toggleEventStatus('${event.id}', '${event.status}')">${event.status === 'published' ? 'Unpublish' : 'Publish'}</button>
+            <button class="link-button" onclick="deleteEvent('${event.id}')" style="color: var(--danger);">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+
+      eventsStack.innerHTML = filtered.map(event => `
+        <article class="stack-card">
+          <div class="stack-row"><strong>${event.title}</strong><span class="status-pill ${event.status}">${statusLabels[event.status] || event.status}</span></div>
+          <div class="stack-row"><span>${formatDate(event.date)} • ${event.venue}</span></div>
+          <div class="stack-row"><span>${event.capacity - event.tickets_remaining} / ${event.capacity}</span></div>
+        </article>
+      `).join('');
+    }
+
+    function renderEventFilterTabs() {
+      eventFilterTabs.innerHTML = eventStatuses.map(status => `
+        <button class="tab ${state.eventFilter === status ? 'active' : ''}" data-status="${status}">${status === 'all' ? 'All' : statusLabels[status]}</button>
+      `).join('');
+      eventFilterTabs.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          state.eventFilter = tab.dataset.status;
+          renderEventFilterTabs();
+          renderEventsPage();
+        });
+      });
+    }
+
+    async function renderTicketsPage() {
+      pageHeading.textContent = 'Tickets';
+      pageSubtitle.textContent = 'Search and inspect ticket activity.';
+      if (!state.tickets.length || !state.events.length) await Promise.all([fetchTickets(), fetchEvents()]);
+      renderTicketStatusTabs();
+      renderTicketEventOptions();
+      const tickets = state.tickets.filter(ticket => {
+        const matchStatus = state.ticketStatus === 'all' || ticket.status === state.ticketStatus;
+        const matchEvent = state.ticketEvent === 'all' || ticket.event_slug === state.ticketEvent;
+        const search = state.ticketSearch.toLowerCase();
+        const matchSearch = !search || [ticket.reference, ticket.buyer_name, ticket.buyer_email, ticket.event_title].some(text => text?.toLowerCase().includes(search));
+        return matchStatus && matchEvent && matchSearch;
+      });
+
+      ticketsTableBody.innerHTML = tickets.map(ticket => `
+        <tr>
+          <td><span style="color: var(--primary); font-family: 'JetBrains Mono', monospace;">${ticket.reference}</span></td>
+          <td>${ticket.buyer_name}</td>
+          <td>${ticket.buyer_email}</td>
+          <td>${formatCurrency(ticket.amount_paid || 0)}</td>
+          <td><span class="badge" data-variant="${ticket.status}">${statusLabels[ticket.status] || ticket.status}</span></td>
+          <td>${formatDate(ticket.created_at)}</td>
+          <td><button class="link-button" onclick="openTicketDetail('${ticket.reference}')">View</button></td>
+        </tr>
+      `).join('');
+
+      ticketsStack.innerHTML = tickets.map(ticket => `
+        <article class="stack-card">
+          <div class="stack-row"><strong>${ticket.reference}</strong><span class="badge" data-variant="${ticket.status}">${statusLabels[ticket.status] || ticket.status}</span></div>
+          <div class="stack-row"><span>${ticket.buyer_name}</span><span>${ticket.event_title}</span></div>
+          <div class="stack-row"><span>${formatCurrency(ticket.amount_paid || 0)}</span><button class="link-button" onclick="openTicketDetail('${ticket.reference}')">View</button></div>
+        </article>
+      `).join('');
+    }
+
+    function renderTicketStatusTabs() {
+      ticketStatusTabs.innerHTML = ticketStatuses.map(status => `
+        <button class="tab ${state.ticketStatus === status ? 'active' : ''}" data-status="${status}">${status === 'all' ? 'All' : statusLabels[status]}</button>
+      `).join('');
+    }
+
+    function renderTicketEventOptions() {
+      ticketEventFilter.innerHTML = `<option value="all">All events</option>` + state.events.map(event => `
+        <option value="${event.slug}" ${state.ticketEvent === event.slug ? 'selected' : ''}>${event.title}</option>
+      `).join('');
+    }
+
+    function focusScanInput() {
+      scanInput.focus();
+      scanInput.select();
+      return null;
+    }
+
+    async function verifyScan() {
+      const value = scanInput.value.trim();
+      if (!value) {
+        showToast('Enter a ticket reference to verify.', 'warning');
+        scanInput.focus();
+        return;
+      }
+      setScanResult('pending', 'Verifying ticket...');
+      try {
+        const response = await request(`${API_BASE}/tickets/verify/`, {
+          method: 'POST',
+          body: JSON.stringify({ reference: value }),
+          headers: { 'Content-Type': 'application/json' },
+        });
+        setScanResult('success', response.message, response.ticket);
+        await fetchTickets();
+        renderDashboard();
+      } catch (error) {
+        const payload = error.data || {};
+        const message = payload.message || 'Unable to verify ticket.';
+        const resultType = payload.valid === false ? 'error' : 'warning';
+        setScanResult(resultType, message, payload.ticket);
+      }
+    }
+
+    function resetScan() {
+      scanInput.value = '';
+      setScanResult('neutral', 'Ready for the next guest');
+      scanInput.focus();
+    }
+
+    function setScanResult(type, message, ticket = null) {
+      scanResult.className = 'scan-result';
+      if (type === 'success') scanResult.classList.add('success');
+      if (type === 'warning') scanResult.classList.add('warning');
+      if (type === 'error') scanResult.classList.add('error');
+      scanResult.innerHTML = `
+        <h3>${message}</h3>
+        ${ticket ? `<div style="display:grid; gap:10px; text-align:left; margin-top:14px;">
+          <div><strong>Reference</strong><div>${ticket.reference}</div></div>
+          <div><strong>Buyer</strong><div>${ticket.buyer_name}</div></div>
+          <div><strong>Event</strong><div>${ticket.event_title}</div></div>
+          <div><strong>Status</strong><div>${statusLabels[ticket.status] || ticket.status}</div></div>
+        </div>` : ''}
+      `;
+    }
+
+    function openTicketDetail(reference) {
+      const ticket = state.tickets.find(item => item.reference === reference);
+      if (!ticket) return showToast('Ticket not found locally. Refreshing.', 'warning');
+      ticketDetailContent.innerHTML = `
+        <article class="hero-item"><strong>${ticket.reference}</strong><span>${statusLabels[ticket.status] || ticket.status}</span></article>
+        <article class="hero-item"><strong>${ticket.buyer_name}</strong><span>${ticket.buyer_email}</span></article>
+        <article class="hero-item"><strong>${ticket.event_title}</strong><span>${formatDate(ticket.event_date)} • ${ticket.event_venue}</span></article>
+        <article class="hero-item"><strong>Amount paid</strong><span>${formatCurrency(ticket.amount_paid || 0)}</span></article>
+        <article class="hero-item"><strong>Created</strong><span>${formatDate(ticket.created_at)}</span></article>
+        <article class="hero-item"><strong>QR code</strong><span>${ticket.qr_code ? `<img src="${ticket.qr_code}" alt="QR code" style="width:200px;height:200px;object-fit:contain;border-radius:12px;">` : 'No QR image available.'}</span></article>
+      `;
+      ticketDetailDrawer.classList.add('open');
+    }
+
+    function openEventModal(event = null) {
+      eventModal.classList.add('open');
+      eventModalHeading.textContent = event ? 'Edit event' : 'Add new event';
+      state.isEditing = Boolean(event);
+      state.activeEventId = event?.id || null;
+      const form = eventForm;
+      form.reset();
+      if (event) {
+        form.title.value = event.title;
+        form.description.value = event.description || '';
+        form.venue.value = event.venue;
+        form.date.value = toInputDate(event.date);
+        form.capacity.value = event.capacity;
+        form.entry_fee.value = event.entry_fee;
+        form.status.value = event.status;
+      } else {
+        form.status.value = 'draft';
+      }
+      flyerDrop.classList.remove('active');
+    }
+
+    function closeEventModal() {
+      eventModal.classList.remove('open');
+      state.activeEventId = null;
+      state.isEditing = false;
+    }
+
+    function activateDrop() { flyerDrop.classList.add('active'); }
+    function deactivateDrop() { flyerDrop.classList.remove('active'); }
+    function handleFileDrop(event) {
+      event.preventDefault();
+      deactivateDrop();
+      const file = event.dataTransfer.files[0];
+      if (file) flyerDrop.querySelector('input').files = event.dataTransfer.files;
+    }
+
+    async function onSaveEvent(event) {
+      event.preventDefault();
+      const formData = new FormData(eventForm);
+      const payload = new FormData();
+      payload.append('title', formData.get('title'));
+      payload.append('description', formData.get('description'));
+      payload.append('venue', formData.get('venue'));
+      payload.append('date', formData.get('date'));
+      payload.append('capacity', formData.get('capacity'));
+      payload.append('entry_fee', formData.get('entry_fee'));
+      payload.append('status', formData.get('status'));
+      const flyerFile = formData.get('flyer');
+      if (flyerFile && flyerFile.name) payload.append('flyer', flyerFile);
+      saveEventButton.textContent = 'Saving...';
+      saveEventButton.disabled = true;
+
+      try {
+        const method = state.isEditing ? 'PATCH' : 'POST';
+        const url = state.isEditing ? `${API_BASE}/events/admin/${state.activeEventId}/` : `${API_BASE}/events/admin/create/`;
+        await request(url, { method, body: payload });
+        showToast(`Event ${state.isEditing ? 'updated' : 'created'} successfully.`, 'success');
+        closeEventModal();
+        await fetchEvents();
+        renderEventsPage();
+        renderDashboard();
+      } catch (error) {
+        showToast('Unable to save event. Check fields and try again.', 'error');
+      } finally {
+        saveEventButton.textContent = 'Save event';
+        saveEventButton.disabled = false;
+      }
+    }
+
+    async function editEvent(id) {
+      const event = state.events.find(item => item.id === id);
+      if (!event) return showToast('Event not found.', 'error');
+      openEventModal(event);
+    }
+
+    async function toggleEventStatus(id, currentStatus) {
+      const nextStatus = currentStatus === 'published' ? 'draft' : 'published';
+      try {
+        await request(`${API_BASE}/events/admin/${id}/`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status: nextStatus }),
+          headers: { 'Content-Type': 'application/json' },
+        });
+        showToast(`Event ${nextStatus === 'published' ? 'published' : 'unpublished'}.`, 'success');
+        await fetchEvents();
+        renderEventsPage();
+        renderDashboard();
+      } catch (error) {
+        showToast('Unable to update event status.', 'error');
+      }
+    }
+
+    async function deleteEvent(id) {
+      if (!confirm('Delete this event permanently?')) return;
+      try {
+        await request(`${API_BASE}/events/admin/${id}/`, { method: 'DELETE' });
+        showToast('Event deleted.', 'success');
+        await fetchEvents();
+        renderEventsPage();
+        renderDashboard();
+      } catch (error) {
+        showToast('Unable to delete event.', 'error');
+      }
+    }
+
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+      return null;
+    }
+
+    async function request(url, options = {}) {
+      const config = { credentials: 'include', ...options };
+      const method = (config.method || 'GET').toUpperCase();
+      config.headers = config.headers || {};
+      if (!['GET', 'HEAD', 'OPTIONS', 'TRACE'].includes(method)) {
+        const token = getCookie('csrftoken');
+        if (token) {
+          config.headers['X-CSRFToken'] = token;
+        }
+      }
+      const response = await fetch(url, config);
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : null;
+      if (!response.ok) {
+        throw { status: response.status, data };
+      }
+      return data;
+    }
+
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 2 }).format(Number(value || 0));
+    }
+
+    function formatDate(value) {
+      if (!value) return '-';
+      const date = new Date(value);
+      return new Intl.DateTimeFormat('en-GB', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(date);
+    }
+
+    function toInputDate(value) {
+      if (!value) return '';
+      const date = new Date(value);
+      const tzOff = date.getTimezoneOffset() * 60000;
+      const local = new Date(date.getTime() - tzOff);
+      return local.toISOString().slice(0, 16);
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.dataset.type = type;
+      toast.innerHTML = `<span>${message}</span><div class="toast-progress"><span></span></div>`;
+      document.getElementById('toast-container').appendChild(toast);
+      setTimeout(() => toast.remove(), 4200);
+    }
+  </script>
+</body>
+</html>
