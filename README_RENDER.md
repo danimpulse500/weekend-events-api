@@ -17,7 +17,7 @@ Environment variables (minimum):
 Notes:
 
 - This repo uses `requirements.txt`. Render may try to use Poetry if a `pyproject.toml` is present or if the service is configured to use Poetry. To avoid Poetry errors, ensure the Build Command is the `pip install` line above and remove any `POETRY_VERSION` environment variable from your Render service settings.
-- Python version: Render uses Python 3.14 by default for this instance. The project now depends on `psycopg[binary]==3.2.1` (psycopg v3) which supports Python 3.14.
+- Python version: Render uses Python 3.14 by default for this instance. This project is pinned to Django 5.0.6, which is not compatible with Python 3.14 in the admin templating layer. Set `pythonVersion: 3.12.0` in `render.yaml` (and avoid any `POETRY_VERSION` env var) to keep Render running this app with the existing Django version.
 
 Local development:
 
