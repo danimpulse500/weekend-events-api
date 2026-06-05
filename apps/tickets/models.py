@@ -1,8 +1,16 @@
+from django.conf import settings
 from django.db import models
 from apps.events.models import Event
 import uuid
 import random
 import string
+
+
+def get_storage_image_field(name, upload_to=None, folder=None):
+    if getattr(settings, 'USE_CLOUDINARY', False):
+        from cloudinary.models import CloudinaryField
+        return CloudinaryField(name, folder=folder, null=True, blank=True)
+    return models.ImageField(upload_to=upload_to, null=True, blank=True)
 
 
 def generate_ticket_ref():
@@ -36,7 +44,7 @@ class Ticket(models.Model):
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     # QR
-    qr_code = models.ImageField(upload_to='qr_codes/', null=True, blank=True)
+    qr_code = get_storage_image_field('qr_code', upload_to='qr_codes/', folder='qr_codes')
 
     # Status
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)

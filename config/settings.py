@@ -10,6 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env(
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, ['*']),
+    USE_CLOUDINARY=(bool, False),
 )
 
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
@@ -33,6 +34,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_spectacular',
     'corsheaders',
+    'cloudinary',
+    'cloudinary_storage',
 
     # Local
     'apps.events',
@@ -116,6 +119,16 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Cloudinary (optional): when `CLOUDINARY_URL` is set in the environment,
+# use Cloudinary for media storage in production or when explicitly enabled.
+CLOUDINARY_URL = env('CLOUDINARY_URL', default='')
+USE_CLOUDINARY = env('USE_CLOUDINARY')
+
+if CLOUDINARY_URL and (not DEBUG or USE_CLOUDINARY):
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+else:
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

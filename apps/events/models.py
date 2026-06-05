@@ -1,8 +1,16 @@
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.core.validators import MinValueValidator
 from django.utils.text import slugify
 import uuid
+
+
+def get_storage_image_field(name, upload_to=None, folder=None):
+    if getattr(settings, 'USE_CLOUDINARY', False):
+        from cloudinary.models import CloudinaryField
+        return CloudinaryField(name, folder=folder, null=True, blank=True)
+    return models.ImageField(upload_to=upload_to, null=True, blank=True)
 
 
 class Event(models.Model):
@@ -17,7 +25,7 @@ class Event(models.Model):
     title = models.CharField(max_length=255)
     slug = models.SlugField(max_length=300, unique=True, blank=True)
     description = models.TextField(blank=True)
-    flyer = models.ImageField(upload_to='event_flyers/', null=True, blank=True)
+    flyer = get_storage_image_field('flyer', upload_to='event_flyers/', folder='event_flyers')
     venue = models.CharField(max_length=255)
     date = models.DateTimeField()
     entry_fee = models.DecimalField(

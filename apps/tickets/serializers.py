@@ -29,6 +29,7 @@ class TicketSerializer(serializers.ModelSerializer):
     event_date = serializers.DateTimeField(source='event.date', read_only=True)
     event_venue = serializers.CharField(source='event.venue', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    qr_code = serializers.SerializerMethodField()
 
     class Meta:
         model = Ticket
@@ -38,6 +39,18 @@ class TicketSerializer(serializers.ModelSerializer):
             'qr_code', 'scanned_at', 'created_at',
         ]
         read_only_fields = fields
+
+    def get_qr_code(self, obj):
+        if not obj.qr_code:
+            return None
+        try:
+            url = obj.qr_code.url
+        except Exception:
+            return None
+        if url.startswith('http://') or url.startswith('https://'):
+            return url
+        request = self.context.get('request')
+        return request.build_absolute_uri(url) if request and url else url
 
 
 class VerifyTicketSerializer(serializers.Serializer):
