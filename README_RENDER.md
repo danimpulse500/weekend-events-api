@@ -7,6 +7,7 @@ This project is deployed on Render. Use these recommended settings and commands.
 - **Start Command (worker)**: celery -A config worker --loglevel=info --concurrency=2
 
 Environment variables (minimum):
+
 - **DJANGO_SETTINGS_MODULE**: config.settings
 - **SECRET_KEY**: (set or generate)
 - **DATABASE_URL**: provided by Render Postgres service
@@ -14,6 +15,7 @@ Environment variables (minimum):
 - **ALLOWED_HOSTS**: .onrender.com
 
 Notes:
+
 - This repo uses `requirements.txt`. Render may try to use Poetry if a `pyproject.toml` is present or if the service is configured to use Poetry. To avoid Poetry errors, ensure the Build Command is the `pip install` line above.
 - Python version: Render uses Python 3.14 by default for this instance. The project now depends on `psycopg[binary]==3.2.1` (psycopg v3) which supports Python 3.14.
 
@@ -28,8 +30,14 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-Optional: run the startup script locally (Linux/macOS):
+Optional: run the startup script locally on Linux/Render environments:
 
 ```bash
 bash startup.sh
+```
+
+On Windows, `gunicorn` may fail because it depends on Unix-only modules like `fcntl`. Use Django's built-in development server instead:
+
+```bash
+python manage.py runserver
 ```
