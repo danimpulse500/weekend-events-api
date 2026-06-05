@@ -2,8 +2,8 @@ Weekend Events API — Render deployment notes
 
 This project is deployed on Render. Use these recommended settings and commands.
 
-- **Build Command**: pip install -r requirements.txt
-- **Start Command (web)**: bash startup.sh
+- **Build Command**: pip install -r requirements.txt && python manage.py migrate
+- **Start Command (web)**: gunicorn config.wsgi:application
 - **Start Command (worker)**: celery -A config worker --loglevel=info --concurrency=2
 
 Environment variables (minimum):
@@ -16,7 +16,7 @@ Environment variables (minimum):
 
 Notes:
 
-- This repo uses `requirements.txt`. Render may try to use Poetry if a `pyproject.toml` is present or if the service is configured to use Poetry. To avoid Poetry errors, ensure the Build Command is the `pip install` line above.
+- This repo uses `requirements.txt`. Render may try to use Poetry if a `pyproject.toml` is present or if the service is configured to use Poetry. To avoid Poetry errors, ensure the Build Command is the `pip install` line above and remove any `POETRY_VERSION` environment variable from your Render service settings.
 - Python version: Render uses Python 3.14 by default for this instance. The project now depends on `psycopg[binary]==3.2.1` (psycopg v3) which supports Python 3.14.
 
 Local development:
