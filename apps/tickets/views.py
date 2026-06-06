@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
 from django.utils import timezone
+from django.conf import settings
 
 from .models import Ticket
 from .serializers import (
@@ -85,7 +86,8 @@ class InitiateTicketView(APIView):
             }, status=status.HTTP_201_CREATED)
 
         # Paid event — get Flutterwave payment link
-        redirect_url = request.build_absolute_uri(f'/api/tickets/payment-callback/')
+        frontend_url = settings.FRONTEND_URL.rstrip('/')
+        redirect_url = f'{frontend_url}/event.html?slug={event.slug}'
 
         try:
             payment = initialize_payment(ticket, redirect_url=redirect_url)
