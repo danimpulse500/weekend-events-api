@@ -1,6 +1,15 @@
 from rest_framework import serializers
 from apps.events.models import Event
-from .models import Ticket
+from .models import Ticket, TicketType
+
+class TicketTypeSerializer(serializers.ModelSerializer):
+    tickets_remaining = serializers.IntegerField(read_only=True)
+    is_available = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = TicketType
+        fields = ['id', 'name', 'price', 'capacity', 'description',
+                  'tickets_remaining', 'is_available', 'order']
 
 
 class InitiateTicketSerializer(serializers.Serializer):
@@ -8,22 +17,26 @@ class InitiateTicketSerializer(serializers.Serializer):
     buyer_name = serializers.CharField(max_length=255)
     buyer_email = serializers.EmailField()
     buyer_phone = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    ticket_type_id = serializers.IntegerField(help_text='ID of the ticket type selected')
 
-    def validate_event_slug(self, value):
+    def validate(self, data):
+        event = self.context.get('event')
+        ticket_type_id = data.get('ticket_type_id')
+
         try:
-            event = Event.objects.get(slug=value, status=Event.Status.PUBLISHED)
-        except Event.DoesNotExist:
-            raise serializers.ValidationError('Event not found or not available.')
+            ticket_type = TicketType.objects.get(id=ticket_type_id, event=event)
+        except TicketType.DoesNotExist:
+            raise serializers.ValidationError({'ticket_type_id': 'Invalid ticket type for this event.'})
 
-        if not event.is_available:
-            raise serializers.ValidationError(
-                'This event is sold out or no longer accepting tickets.'
-            )
-        self.context['event'] = event
-        return value
+        if not ticket_type.is_available:
+            raise serializers.ValidationError({'ticket_type_id': f'{ticket_type.name} tickets are sold out.'})
+
+        self.context['ticket_type'] = ticket_type
+        return data
 
 
 class TicketSerializer(serializers.ModelSerializer):
+    ticket_type_name = serializers.CharField(source='ticket_type.name', read_only=True)
     event_title = serializers.CharField(source='event.title', read_only=True)
     event_slug = serializers.SlugField(source='event.slug', read_only=True)
     event_date = serializers.DateTimeField(source='event.date', read_only=True)
@@ -36,7 +49,7 @@ class TicketSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'reference', 'event_title', 'event_slug', 'event_date', 'event_venue',
             'buyer_name', 'buyer_email', 'amount_paid', 'status', 'status_display',
-            'qr_code', 'scanned_at', 'created_at',
+            'ticket_type_name', 'qr_code', 'scanned_at', 'created_at',
         ]
         read_only_fields = fields
 

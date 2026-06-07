@@ -22,6 +22,35 @@ def generate_ticket_ref():
     return f'EVNT-{year}-{suffix}'
 
 
+class TicketType(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='ticket_types')
+    name = models.CharField(max_length=100)  # e.g. "Gold", "Elite Table"
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    capacity = models.PositiveIntegerField(help_text='Max tickets for this type')
+    description = models.TextField(blank=True, help_text='Perks, inclusions, etc.')
+    order = models.PositiveIntegerField(default=0, help_text='Display order (lowest first)')
+
+    class Meta:
+        ordering = ['order', 'price']
+        verbose_name = 'Ticket Type'
+        verbose_name_plural = 'Ticket Types'
+
+    def __str__(self):
+        return f'{self.name} — {self.event.title}'
+
+    @property
+    def tickets_sold(self):
+        return self.tickets.filter(status='confirmed').count()
+
+    @property
+    def tickets_remaining(self):
+        return self.capacity - self.tickets_sold
+
+    @property
+    def is_available(self):
+        return self.tickets_remaining > 0
+
+
 class Ticket(models.Model):
     class Status(models.TextChoices):
         PENDING = 'pending', 'Pending Payment'
@@ -37,6 +66,14 @@ class Ticket(models.Model):
     buyer_name = models.CharField(max_length=255)
     buyer_email = models.EmailField()
     buyer_phone = models.CharField(max_length=20, blank=True)
+
+    # Add this field to Ticket, after buyer_phone
+    ticket_type = models.ForeignKey(
+        'TicketType',
+        on_delete=models.PROTECT,
+        related_name='tickets',
+        null=True, blank=True
+    )
 
     # Payment
     flutterwave_tx_ref = models.CharField(max_length=255, blank=True, db_index=True)

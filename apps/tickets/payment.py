@@ -15,7 +15,7 @@ def initialize_payment(ticket, redirect_url: str) -> dict:
 
     payload = {
         'tx_ref': tx_ref,
-        'amount': str(ticket.event.entry_fee),
+        'amount': str(ticket.ticket_type.price if ticket.ticket_type else ticket.event.entry_fee),
         'currency': 'NGN',
         'redirect_url': redirect_url,
         'customer': {

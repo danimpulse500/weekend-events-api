@@ -5,8 +5,20 @@ from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from .models import Event
 from .serializers import EventListSerializer, EventDetailSerializer
+from apps.tickets.models import TicketType
+from apps.tickets.serializers import TicketTypeSerializer
 
 
+@extend_schema(tags=['Events'], summary='List ticket types for an event')
+class EventTicketTypesView(generics.ListAPIView):
+    serializer_class = TicketTypeSerializer
+
+    def get_queryset(self):
+        return TicketType.objects.filter(
+            event__slug=self.kwargs['slug'],
+            event__status='published'
+        )
+    
 @extend_schema(
     tags=['Events'],
     summary='List all published events',

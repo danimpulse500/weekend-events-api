@@ -62,10 +62,12 @@ class InitiateTicketView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         event = serializer.context['event']
+        ticket_type = serializer.context['ticket_type']
 
         # Create pending ticket
         ticket = Ticket.objects.create(
             event=event,
+            ticket_type=ticket_type,
             buyer_name=serializer.validated_data['buyer_name'],
             buyer_email=serializer.validated_data['buyer_email'],
             buyer_phone=serializer.validated_data.get('buyer_phone', ''),
