@@ -1,20 +1,19 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from .models import Event
-# In apps/events/admin.py — add this above EventAdmin
 from apps.tickets.models import TicketType
+
 
 class TicketTypeInline(admin.TabularInline):
     model = TicketType
     extra = 1
     fields = ['name', 'price', 'capacity', 'description', 'order']
 
-# Then inside EventAdmin class, add:
-inlines = [TicketTypeInline]
-
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
+    inlines = [TicketTypeInline]  # <-- correctly inside the class
+
     list_display = [
         'title', 'venue', 'date', 'entry_fee',
         'capacity_display', 'status_badge', 'created_at'
