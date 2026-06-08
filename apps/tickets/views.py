@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
 from django.utils import timezone
 from django.conf import settings
+from apps.events.models import Event  # Added explicit import reference protection
 
 from .models import Ticket
 from .serializers import (
@@ -30,13 +31,14 @@ class TicketListView(generics.ListAPIView):
     search_fields = ['reference', 'buyer_name', 'buyer_email', 'event__title']
 
     def get_queryset(self):
-        queryset = Ticket.objects.select_related('event').order_by('-created_at')
-        status = self.request.query_params.get('status')
-        event = self.request.query_params.get('event')
-        if status:
-            queryset = queryset.filter(status=status)
-        if event:
-            queryset = queryset.filter(event__slug=event)
+        # Optimized database hit path via select_related tracking on both links
+        queryset = Ticket.objects.select_related('event', 'ticket_type').order_by('-created_at')
+        status_param = self.request.query_params.get('status')
+        event_param = self.request.query_params.get('event')
+        if status_param:
+            queryset = queryset.filter(status=status_param)
+        if event_param:
+            queryset = queryset.filter(event__slug=event_param)
         return queryset
 
 
@@ -50,21 +52,28 @@ class TicketListView(generics.ListAPIView):
     ),
     request=InitiateTicketSerializer,
     responses={
-        201: OpenApiResponse(description='Payment link returned'),
+        201: OpenApiResponse(description='Payment link returned or Free ticket issued'),
         400: OpenApiResponse(description='Validation error'),
     }
 )
 class InitiateTicketView(APIView):
 
     def post(self, request):
-        serializer = InitiateTicketSerializer(data=request.data, context={'request': request})
+        # 1. Fetch Event first to feed into the Serializer Context
+        event_slug = request.data.get('event_slug')
+        try:
+            event = Event.objects.get(slug=event_slug)
+        except Event.DoesNotExist:
+            return Response({'event_slug': ['Invalid event slug.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 2. Pass context data to handle capacity validation rules inside the serializer layer
+        serializer = InitiateTicketSerializer(data=request.data, context={'request': request, 'event': event})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        event = serializer.context['event']
         ticket_type = serializer.context['ticket_type']
 
-        # Create pending ticket
+        # 3. Instantiate base ticket record
         ticket = Ticket.objects.create(
             event=event,
             ticket_type=ticket_type,
@@ -74,8 +83,8 @@ class InitiateTicketView(APIView):
             status=Ticket.Status.PENDING,
         )
 
-        # Free event — confirm immediately, no payment needed
-        if event.is_free:
+        # CRITICAL SECURITY FIX: Check individual ticket_type price instead of event.is_free
+        if ticket_type.price == 0:
             from .tasks import process_confirmed_ticket
             ticket.status = Ticket.Status.CONFIRMED
             ticket.amount_paid = 0
@@ -87,17 +96,16 @@ class InitiateTicketView(APIView):
                 'status': 'confirmed',
             }, status=status.HTTP_201_CREATED)
 
-        # Paid event — get Flutterwave payment link
+        # Paid tier logic verification — trigger Flutterwave checkout integrations
         frontend_url = settings.FRONTEND_URL.rstrip('/')
         redirect_url = f'{frontend_url}/event.html?slug={event.slug}'
 
         try:
             payment = initialize_payment(ticket, redirect_url=redirect_url)
         except Exception as e:
-            ticket.delete()
+            ticket.delete()  # Drop invalid generation rows cleanly
             return Response({'error': str(e)}, status=status.HTTP_502_BAD_GATEWAY)
 
-        # Store tx_ref so we can match it in webhook
         ticket.flutterwave_tx_ref = payment['tx_ref']
         ticket.save(update_fields=['flutterwave_tx_ref'])
 
@@ -132,7 +140,8 @@ class VerifyTicketView(APIView):
         reference = serializer.validated_data['reference'].strip().upper()
 
         try:
-            ticket = Ticket.objects.select_related('event').get(reference=reference)
+            # Added ticket_type lookup Optimization
+            ticket = Ticket.objects.select_related('event', 'ticket_type').get(reference=reference)
         except Ticket.DoesNotExist:
             return Response({
                 'valid': False,
@@ -143,7 +152,7 @@ class VerifyTicketView(APIView):
             return Response({
                 'valid': False,
                 'message': f'⚠️ Already scanned at {ticket.scanned_at.strftime("%H:%M on %d %b")}.',
-                'ticket': TicketSerializer(ticket).data,
+                'ticket': TicketSerializer(ticket, context={'request': request}).data,
             }, status=status.HTTP_400_BAD_REQUEST)
 
         if ticket.status != Ticket.Status.CONFIRMED:
@@ -152,7 +161,6 @@ class VerifyTicketView(APIView):
                 'message': f'❌ Ticket status is "{ticket.get_status_display()}" — not valid for entry.',
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # All good — mark as scanned
         ticket.status = Ticket.Status.SCANNED
         ticket.scanned_at = timezone.now()
         ticket.save(update_fields=['status', 'scanned_at'])
@@ -160,7 +168,7 @@ class VerifyTicketView(APIView):
         return Response({
             'valid': True,
             'message': f'✅ Valid! Welcome, {ticket.buyer_name}.',
-            'ticket': TicketSerializer(ticket).data,
+            'ticket': TicketSerializer(ticket, context={'request': request}).data,
         }, status=status.HTTP_200_OK)
 
 
@@ -173,10 +181,10 @@ class TicketDetailView(APIView):
 
     def get(self, request, reference):
         try:
-            ticket = Ticket.objects.select_related('event').get(
+            ticket = Ticket.objects.select_related('event', 'ticket_type').get(
                 reference=reference.upper()
             )
         except Ticket.DoesNotExist:
             return Response({'error': 'Ticket not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        return Response(TicketSerializer(ticket).data)
+        return Response(TicketSerializer(ticket, context={'request': request}).data)

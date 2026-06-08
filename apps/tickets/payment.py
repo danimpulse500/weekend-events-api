@@ -2,7 +2,6 @@ import requests
 import uuid
 from django.conf import settings
 
-
 FLUTTERWAVE_BASE_URL = settings.FLUTTERWAVE_BASE_URL
 
 
@@ -13,9 +12,13 @@ def initialize_payment(ticket, redirect_url: str) -> dict:
     """
     tx_ref = f'EVT-{ticket.reference}-{uuid.uuid4().hex[:8].upper()}'
 
+    # CRITICAL FIX: Ensure a ticket type exists, otherwise default price calculation to 0.00
+    if not ticket.ticket_type:
+        raise ValueError(f"Ticket {ticket.reference} is missing a assigned Ticket Type tier configuration.")
+
     payload = {
         'tx_ref': tx_ref,
-        'amount': str(ticket.ticket_type.price if ticket.ticket_type else ticket.event.entry_fee),
+        'amount': str(ticket.ticket_type.price),  # Cleaned: Pulled directly from the selected tier
         'currency': 'NGN',
         'redirect_url': redirect_url,
         'customer': {
@@ -26,10 +29,11 @@ def initialize_payment(ticket, redirect_url: str) -> dict:
         'meta': {
             'ticket_id': str(ticket.id),
             'event_id': str(ticket.event.id),
+            'ticket_type_id': str(ticket.ticket_type.id),  # Added to meta tracking logs
         },
         'customizations': {
             'title': ticket.event.title,
-            'description': f'Ticket for {ticket.event.title}',
+            'description': f'{ticket.ticket_type.name} Ticket for {ticket.event.title}',  # Dynamic description
             'logo': '',
         },
     }

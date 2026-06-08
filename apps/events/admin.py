@@ -7,15 +7,17 @@ from apps.tickets.models import TicketType
 class TicketTypeInline(admin.TabularInline):
     model = TicketType
     extra = 1
-    fields = ['name', 'price', 'capacity', 'description', 'order']
+    # UPDATED: Added tier and seats_per_ticket fields
+    fields = ['tier', 'name', 'price', 'capacity', 'seats_per_ticket', 'description', 'order']
 
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    inlines = [TicketTypeInline]  # <-- correctly inside the class
+    inlines = [TicketTypeInline]
 
+    # UPDATED: Removed 'entry_fee', added 'min_price_display'
     list_display = [
-        'title', 'venue', 'date', 'entry_fee',
+        'title', 'venue', 'date', 'min_price_display',
         'capacity_display', 'status_badge', 'created_at'
     ]
     list_filter = ['status', 'date']
@@ -24,12 +26,13 @@ class EventAdmin(admin.ModelAdmin):
     ordering = ['-date']
     date_hierarchy = 'date'
 
+    # UPDATED: Removed 'entry_fee' from Logistics
     fieldsets = (
         ('Event Info', {
             'fields': ('id', 'title', 'slug', 'description', 'flyer', 'flyer_preview')
         }),
         ('Logistics', {
-            'fields': ('venue', 'date', 'entry_fee', 'capacity')
+            'fields': ('venue', 'date', 'capacity')
         }),
         ('Status & Stats', {
             'fields': ('status', 'tickets_sold', 'tickets_remaining')
@@ -40,15 +43,24 @@ class EventAdmin(admin.ModelAdmin):
         }),
     )
 
+    def min_price_display(self, obj):
+        """Displays the lowest available ticket price on the dashboard."""
+        price = obj.min_price
+        if price == 0:
+            return format_html('<span style="color: #28a745; font-weight: bold;">Free</span>')
+        return f"₦{price:,.2f}"
+    min_price_display.short_description = 'Starting Price'
+
     def capacity_display(self, obj):
-        sold = obj.tickets_sold
-        pct = (sold / obj.capacity * 100) if obj.capacity else 0
+        # UPDATED: Uses total_seats_booked to respect multi-seat/table ticket data accurately
+        booked = obj.total_seats_booked
+        pct = (booked / obj.capacity * 100) if obj.capacity else 0
         color = '#28a745' if pct < 75 else '#ffc107' if pct < 95 else '#dc3545'
         return format_html(
             '<span style="color: {}; font-weight: bold;">{} / {}</span>',
-            color, sold, obj.capacity
+            color, booked, obj.capacity
         )
-    capacity_display.short_description = 'Sold / Capacity'
+    capacity_display.short_description = 'Seats Filled / Capacity'
 
     def status_badge(self, obj):
         colors = {
@@ -70,3 +82,9 @@ class EventAdmin(admin.ModelAdmin):
             return format_html('<img src="{}" style="max-height: 200px; border-radius: 8px;" />', obj.flyer.url)
         return '—'
     flyer_preview.short_description = 'Flyer Preview'
+
+    # Add this method inside your EventAdmin class (e.g., right under capacity_display)
+    def tickets_sold(self, obj):
+        """Calculates total raw confirmed ticket transactions issued for this event."""
+        return obj.tickets.filter(status='confirmed').count()
+    tickets_sold.short_description = 'Tickets Sold (Transactions)'

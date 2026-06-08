@@ -1,16 +1,9 @@
+import uuid
 from django.conf import settings
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
-from django.core.validators import MinValueValidator
 from django.utils.text import slugify
-import uuid
-
-
-def get_storage_image_field(name, upload_to=None, folder=None):
-    if getattr(settings, 'USE_CLOUDINARY', False):
-        from cloudinary.models import CloudinaryField
-        return CloudinaryField(name, folder=folder, null=True, blank=True)
-    return models.ImageField(upload_to=upload_to, null=True, blank=True)
 
 
 class Event(models.Model):
@@ -25,18 +18,13 @@ class Event(models.Model):
     title = models.CharField(max_length=255)
     slug = models.SlugField(max_length=300, unique=True, blank=True)
     description = models.TextField(blank=True)
-    flyer = get_storage_image_field('flyer', upload_to='event_flyers/', folder='event_flyers')
+    flyer = models.ImageField(upload_to='event_flyers/', null=True, blank=True)
     venue = models.CharField(max_length=255)
     date = models.DateTimeField()
-    entry_fee = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        validators=[MinValueValidator(0)],
-        help_text='Set to 0 for free events'
-    )
+    
     capacity = models.PositiveIntegerField(
         validators=[MinValueValidator(1)],
-        help_text='Maximum number of attendees'
+        help_text='Maximum number of physical individual attendees the venue can hold'
     )
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -62,14 +50,16 @@ class Event(models.Model):
         return f'{self.title} — {self.date.strftime("%d %b %Y")}'
 
     @property
-    def tickets_sold(self):
-        return self.tickets.filter(status='confirmed').count()
+    def total_seats_booked(self):
+        """Sums up actual individual headcount filled across all ticket tiers."""
+        return sum(tier.total_seats_occupied for tier in self.ticket_types.all())
 
     @property
     def tickets_remaining(self):
+        """Returns remaining physical seat capacity for the venue."""
         if self.capacity is None:
             return 0
-        return self.capacity - self.tickets_sold
+        return max(0, self.capacity - self.total_seats_booked)
 
     @property
     def is_available(self):
@@ -80,5 +70,15 @@ class Event(models.Model):
         )
 
     @property
+    def min_price(self):
+        """Dynamically fetches the lowest ticket price option available for this event."""
+        cheapest = self.ticket_types.order_by('price').first()
+        return cheapest.price if cheapest else 0
+
+    @property
     def is_free(self):
-        return self.entry_fee == 0
+        """Returns True if the cheapest ticket type is 0, or if no tickets exist yet."""
+        cheapest = self.ticket_types.order_by('price').first()
+        if cheapest:
+            return cheapest.price == 0
+        return True

@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.core.validators import MinValueValidator
 from apps.events.models import Event
 import uuid
 import random
@@ -23,10 +24,37 @@ def generate_ticket_ref():
 
 
 class TicketType(models.Model):
+    class TierChoices(models.TextChoices):
+        REGULAR = 'regular', 'Regular'
+        SILVER = 'silver', 'Silver'
+        GOLD = 'gold', 'Gold'
+        DIAMOND_TABLE = 'diamond_table', 'Diamond Table'
+        ELITE_TABLE = 'elite_table', 'Elite Table'
+        PRESTIGE_TABLE = 'prestige_table', 'Prestige Table'
+        LEGACY_TABLE = 'legacy_table', 'Legacy Table'
+        ROYAL_TABLE = 'royal_table', 'Royal Table'
+        CUSTOM = 'custom', 'Custom Tier'
+
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='ticket_types')
-    name = models.CharField(max_length=100)  # e.g. "Gold", "Elite Table"
+    tier = models.CharField(
+        max_length=50, 
+        choices=TierChoices.choices, 
+        default=TierChoices.REGULAR
+    )
+    name = models.CharField(
+        max_length=100, 
+        blank=True, 
+        help_text='Leave blank to use the tier name default'
+    ) 
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    capacity = models.PositiveIntegerField(help_text='Max tickets for this type')
+    capacity = models.PositiveIntegerField(help_text='Maximum number of purchase slots for this ticket type')
+    
+    seats_per_ticket = models.PositiveIntegerField(
+        default=1,
+        validators=[MinValueValidator(1)],
+        help_text='How many individual people this single ticket choice admits (e.g., 1 for Regular, 12 for Royal Table)'
+    )
+    
     description = models.TextField(blank=True, help_text='Perks, inclusions, etc.')
     order = models.PositiveIntegerField(default=0, help_text='Display order (lowest first)')
 
@@ -35,16 +63,28 @@ class TicketType(models.Model):
         verbose_name = 'Ticket Type'
         verbose_name_plural = 'Ticket Types'
 
+    def save(self, *args, **kwargs):
+        if not self.name:
+            self.name = self.get_tier_display()
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f'{self.name} — {self.event.title}'
+        return f'{self.name} — {self.event.title} (₦{self.price:,})'
 
     @property
     def tickets_sold(self):
+        """Returns the raw count of confirmed tickets issued for this tier."""
         return self.tickets.filter(status='confirmed').count()
 
     @property
+    def total_seats_occupied(self):
+        """Calculates actual headcount volume filled by multiplying tickets by its seating value."""
+        return self.tickets_sold * self.seats_per_ticket
+
+    @property
     def tickets_remaining(self):
-        return self.capacity - self.tickets_sold
+        """Returns remaining sales availability based on target ticket capacity."""
+        return max(0, self.capacity - self.tickets_sold)
 
     @property
     def is_available(self):
@@ -62,12 +102,10 @@ class Ticket(models.Model):
     reference = models.CharField(max_length=20, unique=True, default=generate_ticket_ref, editable=False)
     event = models.ForeignKey(Event, on_delete=models.PROTECT, related_name='tickets')
 
-    # Buyer info
     buyer_name = models.CharField(max_length=255)
     buyer_email = models.EmailField()
     buyer_phone = models.CharField(max_length=20, blank=True)
 
-    # Add this field to Ticket, after buyer_phone
     ticket_type = models.ForeignKey(
         'TicketType',
         on_delete=models.PROTECT,
@@ -75,15 +113,12 @@ class Ticket(models.Model):
         null=True, blank=True
     )
 
-    # Payment
     flutterwave_tx_ref = models.CharField(max_length=255, blank=True, db_index=True)
     flutterwave_tx_id = models.CharField(max_length=255, blank=True)
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
-    # QR
     qr_code = get_storage_image_field('qr_code', upload_to='qr_codes/', folder='qr_codes')
 
-    # Status
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     scanned_at = models.DateTimeField(null=True, blank=True)
 

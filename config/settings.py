@@ -117,18 +117,24 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# MEDIA_URL = '/media/'
+# MEDIA_ROOT = BASE_DIR / 'media'
 
 # Cloudinary (optional): when `CLOUDINARY_URL` is set in the environment,
 # use Cloudinary for media storage in production or when explicitly enabled.
+# Locate your Cloudinary storage block and update it to this:
 CLOUDINARY_URL = env('CLOUDINARY_URL', default='')
 USE_CLOUDINARY = env('USE_CLOUDINARY')
 
 if CLOUDINARY_URL and (not DEBUG or USE_CLOUDINARY):
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    # Overwrite MEDIA_URL to be empty so Django stops injecting '/media/' into Cloudinary URLs
+    MEDIA_URL = ''
 else:
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    # Fallback to local media path layout
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

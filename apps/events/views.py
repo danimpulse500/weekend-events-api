@@ -3,6 +3,8 @@ from django.shortcuts import render
 from rest_framework import generics, filters
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from drf_spectacular.utils import extend_schema, OpenApiParameter
+from django.utils import timezone
+
 from .models import Event
 from .serializers import EventListSerializer, EventDetailSerializer
 from apps.tickets.models import TicketType
@@ -17,8 +19,9 @@ class EventTicketTypesView(generics.ListAPIView):
         return TicketType.objects.filter(
             event__slug=self.kwargs['slug'],
             event__status='published'
-        )
+        ).order_by('order', 'price')
     
+
 @extend_schema(
     tags=['Events'],
     summary='List all published events',
@@ -33,7 +36,10 @@ class EventListView(generics.ListAPIView):
     search_fields = ['title', 'venue']
 
     def get_queryset(self):
-        return Event.objects.filter(status=Event.Status.PUBLISHED).order_by('date')
+        # OPTIMIZED: prefetch_related bundles the ticket types into a single efficient database query
+        return Event.objects.filter(
+            status=Event.Status.PUBLISHED
+        ).prefetch_related('ticket_types').order_by('date')
 
 
 @extend_schema(
@@ -46,7 +52,8 @@ class EventDetailView(generics.RetrieveAPIView):
     lookup_field = 'slug'
 
     def get_queryset(self):
-        return Event.objects.filter(status=Event.Status.PUBLISHED)
+        # OPTIMIZED: Speeds up detail retrieval by preloading ticket choices cleanly
+        return Event.objects.filter(status=Event.Status.PUBLISHED).prefetch_related('ticket_types')
 
 
 @extend_schema(
@@ -64,7 +71,8 @@ class EventAdminListView(generics.ListAPIView):
     search_fields = ['title', 'venue']
 
     def get_queryset(self):
-        queryset = Event.objects.all().order_by('-date')
+        # OPTIMIZED: Crucial prefetch to prevent dashboard slowdowns when listing many admin events
+        queryset = Event.objects.all().prefetch_related('ticket_types').order_by('-date')
         status = self.request.query_params.get('status')
         if status:
             queryset = queryset.filter(status=status)
@@ -80,7 +88,7 @@ class EventAdminListView(generics.ListAPIView):
 )
 class EventCreateView(generics.CreateAPIView):
     serializer_class = EventDetailSerializer
-    queryset = Event.objects.all()
+    queryset = Event.objects.all().prefetch_related('ticket_types')
     parser_classes = [JSONParser, FormParser, MultiPartParser]
 
 
@@ -91,7 +99,7 @@ class EventCreateView(generics.CreateAPIView):
 )
 class EventManageDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = EventDetailSerializer
-    queryset = Event.objects.all()
+    queryset = Event.objects.all().prefetch_related('ticket_types')
     lookup_field = 'pk'
     parser_classes = [JSONParser, FormParser, MultiPartParser]
 
